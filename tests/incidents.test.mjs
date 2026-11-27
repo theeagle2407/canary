@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {deriveIncidents,recordedDuration} from '../src/lib/incidents.mjs';
+const e=(block,status,id='1',kind='run',log=0)=>({block,status,id,kind,log,tx:`tx-${block}`,time:100+block,observed:'1'});
+test('groups repeated failures and errors until recorded recovery',()=>{const [i]=deriveIncidents([e(4,1),e(1,1),e(2,2),e(3,3)]);assert.equal(i.state,'Recovered');assert.equal(i.start.block,2);assert.equal(i.end.block,4);assert.equal(i.failures,2);assert.equal(recordedDuration(i.start.time,i.end.time),'2s')});
+test('separate checks and repeated incidents remain separate',()=>{const rows=deriveIncidents([e(1,2),e(2,2,'2'),e(3,1),e(4,2)]);assert.equal(rows.length,3);assert.deepEqual(rows.map(i=>i.state),['Open','Open','Recovered'])});
+test('retirement is not recovery and duplicate logs do not inflate count',()=>{const first=e(1,2);const [i]=deriveIncidents([first,first,e(2,0,'1','retire')]);assert.equal(i.state,'Retired');assert.equal(i.failures,1)});
+test('orders logs inside one block and ignores passing-only history',()=>{assert.equal(deriveIncidents([e(1,1)]).length,0);const [i]=deriveIncidents([e(2,1,'1','run',2),e(2,2,'1','run',1)]);assert.equal(i.state,'Recovered');assert.equal(recordedDuration(5,5),'0s')});

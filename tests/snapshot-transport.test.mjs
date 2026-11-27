@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {rpcRead,mapLimited,historyKey} from '../src/lib/snapshot-transport.mjs';
+const good=result=>({ok:true,json:async()=>({jsonrpc:'2.0',id:1,result})});
+test('temporary 503 retries one read successfully',async()=>{let n=0;assert.equal(await rpcRead('https://example.invalid','eth_chainId',[],{fetcher:async()=>++n===1?{ok:false,status:503}:good('0x7bf')}),'0x7bf');assert.equal(n,2)});
+test('persistent 503 is surfaced after bounded retry',async()=>{let n=0;await assert.rejects(rpcRead('x','eth_call',[],{fetcher:async()=>{n++;return {ok:false,status:503}}}),/eth_call: HTTP 503/);assert.equal(n,2)});
+test('write methods rejected without network calls',async()=>{await assert.rejects(rpcRead('x','eth_sendRawTransaction',[],{fetcher:()=>{throw Error('called')}}),/Read-only/)});
+test('limited map preserves input order and caps concurrency',async()=>{let active=0,max=0;const result=await mapLimited([1,2,3,4],async x=>{max=Math.max(max,++active);await new Promise(r=>setTimeout(r,5));active--;return x*2});assert.equal(max,2);assert.deepEqual(result,[2,4,6,8])});
+test('history key changes with recorded runs and registry',()=>{const cfg={chainId:1983,registry:'a'},p={id:'1'},r=[{id:'1',runs:2n,checkedBlock:3n}];assert.notEqual(historyKey(cfg,p,r),historyKey(cfg,p,[{...r[0],runs:3n}]));assert.notEqual(historyKey(cfg,p,r),historyKey({...cfg,registry:'b'},p,r))});
+test('malformed responses are not accepted',async()=>{await assert.rejects(rpcRead('x','eth_call',[],{fetcher:async()=>({ok:true,json:async()=>({id:1,result:'0x'})})}),/Invalid RPC response/)});

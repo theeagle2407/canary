@@ -1,0 +1,6 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+const file=new URL('../src/main.jsx',import.meta.url);let s=readFileSync(file,'utf8');
+const before='<h2>Limitations</h2>';
+const insert='<h2>5. Developer API</h2><p>Use the read-only SDK or JSON endpoint to inspect recorded checks at a single block. No wallet is required. For local development, start the API with <code>npm run api</code>.</p><pre>{`curl http://127.0.0.1:8787/v1/projects/1`}</pre><p>Use <code>allFreshPass</code> only for the configured conditions at the returned snapshot. Treat stale, unverified, failed and unavailable results as non-passing. Never treat a pass as a security guarantee.</p>';
+if(!s.includes('<h2>5. Developer API</h2>')){if(!s.includes('<h2>4. Embed reliability evidence</h2>')||!s.includes(before))throw Error('Apply Build 05 first');s=s.replace(before,insert+before);writeFileSync(file,s);}
+const pkg=new URL('../package.json',import.meta.url),p=JSON.parse(readFileSync(pkg,'utf8'));p.scripts.api='node scripts/api.mjs';p.scripts['api:example']='node scripts/api-example.mjs';writeFileSync(pkg,JSON.stringify(p,null,2)+'\n');console.log('Developer SDK/API installed; existing deployment and design unchanged.');

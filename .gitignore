@@ -1,0 +1,19 @@
+node_modules/
+dist/
+artifacts/
+.env
+.env.*
+!.env.example
+.DS_Store
+
+.canary-keeper/
+
+# CANARY production
+*.before-*
+src/deployment.local.json
+.canary-cloud.env
+
+# CANARY mainnet state
+.canary-mainnet/
+**/.canary-mainnet/**
+*.before-mainnet

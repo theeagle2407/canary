@@ -1,0 +1,4 @@
+import {validateRecord,OWNER,REGISTRY} from './mainnet-register.mjs';
+export const MAINNET_RPCS=['https://rpc1mainnet.qie.digital','https://rpc2mainnet.qie.digital','https://rpc4mainnet.qie.digital','https://rpc5mainnet.qie.digital','https://rpc3mainnet.qie.digital'];
+export function buildConfig(record,abi){validateRecord(record);if(!Array.isArray(abi)||!abi.some(x=>x.name==='CheckExecuted')||!abi.some(x=>x.name==='getCheck'))throw Error('Missing registry ABI');return {...record,name:'QIE Mainnet',rpc:MAINNET_RPCS[0],explorer:'https://mainnet.qie.digital',registry:REGISTRY,owner:OWNER,abi,primaryProject:'1',demoProject:'',demo:'',demoAbi:[]};}
+export function isQie(c){return ((c.mode==='testnet'&&c.chainId===1983)||(c.mode==='mainnet'&&c.chainId===1990))&&/^0x[0-9a-f]{40}$/i.test(c.registry);}

@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {parseAbi,supportedFunctions,argument,verifyPayload,interpretWord,templates} from '../src/lib/assertion-builder.mjs';
+const base={name:'test',callData:'0x12345678',expected:'0',op:'0',maxAge:'900'};
+const word=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
+test('ABI artifact and supported signatures including arguments',()=>{assert.equal(parseAbi(JSON.stringify({abi:templates.token})).length,3);assert.deepEqual(supportedFunctions(templates.token).map(f=>f.signature),['totalSupply()','balanceOf(address)','decimals()'])});
+test('excludes state changing, signed, dynamic and multiword results',()=>{const fn=templates.token[0];assert.equal(supportedFunctions([{...fn,stateMutability:'nonpayable'},{...fn,outputs:[{type:'int256'}]},{...fn,outputs:[{type:'string'}]},{...fn,outputs:[{type:'uint256'},{type:'uint256'}]},{...fn,inputs:[{type:'uint256[]'}]}]).length,0)});
+test('overloads remain distinct and duplicates removed',()=>{let a=templates.token[0];assert.equal(supportedFunctions([a,a,{...a,inputs:[{type:'address'}]}]).length,2)});
+test('argument parsing preserves large integers and rejects invalid values',()=>{assert.equal(argument('9007199254740993','uint256'),9007199254740993n);assert.equal(argument('false','bool'),false);assert.throws(()=>argument('256','uint8'));assert.throws(()=>argument('abc','address'))});
+test('registration limits and bool operators',()=>{assert.equal(verifyPayload(base).maxAge,'900');for(const patch of [{expected:'-1'},{callData:'0xabc'},{maxAge:'59'},{name:'😀'.repeat(21)},{output:'bool',op:'1'}])assert.throws(()=>verifyPayload({...base,...patch}))});
+test('preview comparison and response shape',()=>{assert.deepEqual(interpretWord(word(1000),'uint256','1','500'),{observed:'1000',passed:true});assert.equal(interpretWord(word(1),'bool','0','0').passed,false);assert.throws(()=>interpretWord(word(2),'bool','0','0'));assert.throws(()=>interpretWord('0x12','uint256','0','0'))});

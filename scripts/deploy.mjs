@@ -1,0 +1,12 @@
+import {JsonRpcProvider,Wallet,NonceManager,ContractFactory,Interface,formatEther} from 'ethers';
+import fs from 'node:fs'; import {compile} from './compile.mjs'; import {networks} from './networks.mjs';
+const mode=process.argv[2], net=networks[mode]; if(!net) throw Error('Unknown network');
+if(mode==='mainnet' && process.env.CONFIRM_MAINNET!=='YES') throw Error('Mainnet deployment requires CONFIRM_MAINNET=YES. Real gas is spent.');
+const rpc=process.env.QIE_RPC||net.rpc; const provider=new JsonRpcProvider(rpc); const actual=await provider.getNetwork(); if(Number(actual.chainId)!==net.chainId) throw Error('Unexpected chain ID');
+const signer=mode==='local'?await provider.getSigner(0):new NonceManager(new Wallet(process.env.DEPLOYER_KEY||'',provider)); const addr=await signer.getAddress(); console.log('Deploying on',net.name,'from',addr,'balance',formatEther(await provider.getBalance(addr)));
+const artifacts=compile(); const registry=await new ContractFactory(artifacts.Canary.abi,artifacts.Canary.bytecode,signer).deploy(); await registry.waitForDeployment(); const receipt=await registry.deploymentTransaction().wait();
+const demo=await new ContractFactory(artifacts.DemoVault.abi,artifacts.DemoVault.bytecode,signer).deploy(); await demo.waitForDeployment();
+const iface=new Interface(artifacts.DemoVault.abi); const tx=await registry.registerProject('Canary demo vault'); const r=await tx.wait(); const event=r.logs.map(l=>{try{return registry.interface.parseLog(l)}catch{return null}}).find(l=>l?.name==='ProjectRegistered'); const id=event.args.projectId;
+for(const [name,fn,op,expected] of [['Withdrawals enabled','paused',0,0],['Reserve floor (demo units)','reserveUnits',1,500]]) {const t=await registry.registerCheck(id,name,await demo.getAddress(),iface.encodeFunctionData(fn),op,expected,900); await t.wait();}
+const p=await registry.getProject(id); for(const cid of p.checkIds) await (await registry.run(cid,{gasLimit:500000})).wait();
+const config={...net,mode,registry:await registry.getAddress(),demo:await demo.getAddress(),demoProject:id.toString(),deploymentBlock:receipt.blockNumber,deployTx:receipt.hash,abi:artifacts.Canary.abi,demoAbi:artifacts.DemoVault.abi}; fs.mkdirSync('src',{recursive:true});fs.writeFileSync('src/deployment.json',JSON.stringify(config,null,2)); console.log('Deployment written to src/deployment.json',config.registry,'demo',config.demo,'project',config.demoProject); await provider.destroy();

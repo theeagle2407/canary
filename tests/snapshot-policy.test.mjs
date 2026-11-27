@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {startPolling,orderEndpoints,snapshotRequest,bounded} from '../src/lib/snapshot-policy.mjs';
+const flush=()=>new Promise(r=>setImmediate(r));
+test('poll waits for completion then retries without overlapping',async()=>{let resolve,queue=[],calls=0;const stop=startPolling(()=>{calls++;return new Promise(r=>resolve=r)},{schedule:(fn,ms)=>{queue.push({fn,ms});return 1},cancel:()=>{}});assert.equal(calls,1);assert.equal(queue.length,0);resolve(false);await flush();assert.equal(queue[0].ms,5000);queue.shift().fn();assert.equal(calls,2);resolve(true);await flush();assert.equal(queue[0].ms,15000);stop()});
+test('stopped poll cannot schedule further attempts',async()=>{let resolve,count=0;const stop=startPolling(()=>new Promise(r=>resolve=r),{schedule:()=>++count,cancel:()=>{}});stop();resolve(true);await flush();assert.equal(count,0)});
+test('prefer last healthy configured endpoint only',()=>{assert.deepEqual(orderEndpoints(['a','b'],'b'),['b','a']);assert.deepEqual(orderEndpoints(['a','b'],'c'),['a','b'])});
+test('route limits input to project IDs',()=>{assert.deepEqual(snapshotRequest('/__canary/snapshot?selected=1&publicId=2'),{sel:'1',pub:'2'});assert.equal(snapshotRequest('/other'),null);assert.throws(()=>snapshotRequest('/__canary/snapshot?selected=https://example.com'))});
+test('optional history read times out independently',async()=>{await assert.rejects(bounded(new Promise(()=>{}),5),/timed out/);assert.equal(await bounded(Promise.resolve(1),100),1)});

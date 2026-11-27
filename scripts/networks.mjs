@@ -1,0 +1,1 @@
+export const networks={local:{name:'Local chain',chainId:31337,rpc:'http://127.0.0.1:8545',explorer:''},testnet:{name:'QIE Testnet',chainId:1983,rpc:'https://rpc5testnet.qie.digital',explorer:'https://testnet.qie.digital'},mainnet:{name:'QIE Mainnet',chainId:1990,rpc:'https://rpc1mainnet.qie.digital',explorer:'https://mainnet.qie.digital'}};

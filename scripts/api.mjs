@@ -1,0 +1,11 @@
+import {readFileSync} from 'node:fs';
+import {createCanary} from '../sdk/canary.mjs';
+import {createApiServer} from './api-server.mjs';
+const config=JSON.parse(readFileSync(new URL('../src/deployment.json',import.meta.url),'utf8'));
+const client=createCanary(config);
+const port=Number(process.env.CANARY_API_PORT||8787);
+if(!Number.isInteger(port)||port<1024||port>65535)throw Error('Invalid API port');
+const server=createApiServer(client);
+server.requestTimeout=15000;server.headersTimeout=10000;
+server.listen(port,'127.0.0.1',()=>console.log(`CANARY API listening on http://127.0.0.1:${port} | ${config.name} | ${config.registry}`));
+for(const sig of ['SIGTERM','SIGINT'])process.on(sig,()=>server.close());

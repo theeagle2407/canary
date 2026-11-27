@@ -1,0 +1,26 @@
+**
+!package.json
+!package-lock.json
+!index.html
+!vite.config.js
+!jsconfig.json
+!components.json
+!scripts/
+!scripts/**
+!sdk/
+!sdk/**
+!src/
+!src/**
+!public/
+!public/**
+**/*.before-*
+**/*.bak
+**/.env*
+**/deployment.local.json
+**/node_modules/**
+**/.canary-keeper/**
+
+# CANARY mainnet state
+.canary-mainnet/
+**/.canary-mainnet/**
+*.before-mainnet

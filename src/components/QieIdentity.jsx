@@ -1,0 +1,9 @@
+import {useState,useEffect,useRef} from 'react';
+export default function QieIdentity({owner,chainId}){
+ const [result,setResult]=useState(null),[loading,setLoading]=useState(false);const request=useRef(null);
+ useEffect(()=>()=>request.current?.abort(),[]);
+ if(![1983,1990].includes(Number(chainId))||!/^0x[0-9a-f]{40}$/i.test(owner||''))return null;
+ async function lookup(){request.current?.abort();const controller=new AbortController();request.current=controller;setLoading(true);setResult(null);
+ try{const response=await fetch('/api/canary/identity?address='+encodeURIComponent(owner),{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(55000)]),cache:'no-store'});const data=await response.json();if(!response.ok||data.chainId!==1990||data.address?.toLowerCase()!==owner.toLowerCase())throw Error('Unavailable');if(!controller.signal.aborted)setResult(data.state==='resolved'&&/^[a-z0-9-]+\.qie$/i.test(data.name)?data:{state:'unresolved'})}catch{if(!controller.signal.aborted)setResult({state:'unavailable'})}finally{if(!controller.signal.aborted)setLoading(false)}}
+ return <span style={{display:'inline-flex',alignItems:'center',gap:8,marginLeft:10,flexWrap:'wrap'}}><button type="button" disabled={loading} onClick={lookup} title="Resolve this public address using QIE mainnet; not a security or ownership certification" style={{background:'transparent',border:0,padding:0,color:'#e4c568',cursor:loading?'wait':'pointer',font:'inherit',fontSize:12}}>{loading?'Resolving…':result?'Retry QIE ID':'Look up QIE ID'}</button>{result&&<span style={{fontSize:12}}>{result.state==='resolved'?(Number(chainId)===1990?result.name:`${result.name} · Mainnet ID`):result.state==='unresolved'?(Number(chainId)===1990?'No QIE ID found':'No mainnet ID found'):'QIE ID lookup unavailable'}</span>}</span>
+}
