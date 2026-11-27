@@ -8,6 +8,46 @@ On-chain condition verification and reliability monitoring for QIE developers. D
 
 Built for QIE Blockchain Hackathon 3.0.
 
+## Product walkthrough
+
+Screenshots captured on 27 November 2026. The landing playground uses illustrative values; monitoring screenshots show historical production observations, not current status.
+
+### Landing
+
+![Landing page — assertion playground with illustrative values.](docs/screenshots/landing.png)
+
+Landing page — assertion playground with illustrative values.
+
+### Developer Console
+
+![Developer console — owner’s QIEDEX project, three fresh passes and four recorded runs per check.](docs/screenshots/developer-console.png)
+
+Developer console — owner’s QIEDEX project, three fresh passes and four recorded runs per check.
+
+### Condition Builder
+
+![Condition builder — ABI import, raw calldata, comparison and evidence-age settings.](docs/screenshots/condition-builder.png)
+
+Condition builder — ABI import, raw calldata, comparison and evidence-age settings.
+
+### Public Report
+
+![Public verification report — wallet-independent access to recorded results.](docs/screenshots/public-report.png)
+
+Public verification report — wallet-independent access to recorded results.
+
+### Infrastructure
+
+![Infrastructure — five healthy RPC endpoints and an active cloud keeper at capture time.](docs/screenshots/infrastructure.png)
+
+Infrastructure — five healthy RPC endpoints and an active cloud keeper at capture time.
+
+### Documentation
+
+![Developer documentation — searchable integration guide and quickstart.](docs/screenshots/documentation.png)
+
+Developer documentation — searchable integration guide and quickstart.
+
 ## Why CANARY?
 
 A contract being deployed is not evidence that its configured operational assumptions still hold. Router mappings, balances, permissions and configuration values can change. A conventional monitoring dashboard can report what its own server observed, but another application may need a durable, independently inspectable record of a particular condition.
@@ -169,7 +209,7 @@ Embed a public badge:
 
 The current keeper is scoped to project 1 and checks 1–3. It validates chain ID, registry runtime, project ownership and exact approved policies, and records a fee reservation before broadcast. Pending receipts must reconcile before further writes. Its lifetime reservation cap is 0.25 QIE, maximum 300 transactions, maximum 0.0025 QIE per transaction and minimum 0.02 QIE wallet reserve. These are conservative limits, not actual gas costs or an indefinite service guarantee.
 
-Azure secrets provide the dedicated signer only to the keeper process; no private key is bundled with the image or repository. Azure Files retains the mainnet state between revisions. Deployment requires a controlled shutdown and zero active replicas before a replacement worker starts. Never reset a journal or remove a lock while a worker may still be active. Abnormal shutdown recovery can require operator intervention. The hosted notification reference uses a loopback receiver; external signed webhook support is operator-configurable, not personal alert enrollment.
+Azure application secrets supply the dedicated signer at runtime; no private key is bundled with the image or repository. Azure Files retains the mainnet state between revisions. Deployment requires a controlled shutdown and zero active replicas before a replacement worker starts. Never reset a journal or remove a lock while a worker may still be active. Abnormal shutdown recovery can require operator intervention. The hosted notification reference uses a loopback receiver; external signed webhook support is operator-configurable, not personal alert enrollment.
 
 ## Tests and release verification
 
